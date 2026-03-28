@@ -69,12 +69,19 @@ def main() -> None:
             print(f"1) {pair['message_1'].source_name}: {pair['message_1'].text_raw}")
             print(f"2) {pair['message_2'].source_name}: {pair['message_2'].text_raw}")
 
-    baseline = StatisticalBaseline(similarity_threshold=0.2, min_neighbors=1)
-    predictions = baseline.predict(similarity_matrix)
+    baseline = StatisticalBaseline(similarity_threshold=0.05, min_neighbors=1)
+    baseline_results = baseline.analyze(similarity_matrix)
 
-    print("\nBaseline predictions:")
-    for message, prediction in zip(messages, predictions):
-        print(f"[{prediction}] {message.source_name}: {message.text_raw}")
+    print("\nBaseline analysis:")
+    for message, result in zip(messages, baseline_results):
+        print(
+            f"[{result['label']}] "
+            f"neighbors={result['similar_neighbors']} "
+            f"max_sim={result['max_similarity']} "
+            f"avg_sim={result['avg_similarity']} "
+            f"score={result['suspicion_score']} | "
+            f"{message.source_name}: {message.text_raw}"
+        )
 
     cluster_engine = ClusterEngine()
     cluster_labels = cluster_engine.cluster(similarity_matrix, eps=0.95, min_samples=2)

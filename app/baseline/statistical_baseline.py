@@ -1,22 +1,43 @@
 class StatisticalBaseline:
-    def __init__(self, similarity_threshold: float = 0.3, min_neighbors: int = 1) -> None:
+    def __init__(
+        self,
+        similarity_threshold: float = 0.05,
+        min_neighbors: int = 1,
+    ) -> None:
         self.similarity_threshold = similarity_threshold
         self.min_neighbors = min_neighbors
 
-    def predict(self, similarity_matrix) -> list[int]:
-        predictions = []
+    def analyze(self, similarity_matrix) -> list[dict]:
+        results = []
 
         for i in range(len(similarity_matrix)):
-            similar_count = 0
+            similarities = []
 
             for j in range(len(similarity_matrix[i])):
                 if i == j:
                     continue
+                similarities.append(float(similarity_matrix[i][j]))
 
-                if similarity_matrix[i][j] >= self.similarity_threshold:
-                    similar_count += 1
+            similar_neighbors = sum(
+                1 for score in similarities if score >= self.similarity_threshold
+            )
+            max_similarity = max(similarities) if similarities else 0.0
+            avg_similarity = sum(similarities) / len(similarities) if similarities else 0.0
 
-            label = 1 if similar_count >= self.min_neighbors else 0
-            predictions.append(label)
+            suspicion_score = (0.7 * max_similarity) + (0.3 * avg_similarity)
+            label = 1 if similar_neighbors >= self.min_neighbors else 0
 
-        return predictions
+            results.append(
+                {
+                    "label": label,
+                    "similar_neighbors": similar_neighbors,
+                    "max_similarity": round(max_similarity, 3),
+                    "avg_similarity": round(avg_similarity, 3),
+                    "suspicion_score": round(suspicion_score, 3),
+                }
+            )
+
+        return results
+
+    def predict(self, similarity_matrix) -> list[int]:
+        return [item["label"] for item in self.analyze(similarity_matrix)]
